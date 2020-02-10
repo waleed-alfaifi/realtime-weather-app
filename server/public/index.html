@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real Time Weather App</title>
+  </head>
+  <body>
+    <h1>Weclome to my real time weather app</h1>
+    <form>
+      <input type="text" />
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="weather" style="text-align: center"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const city = document.querySelector('input[type="text"').value;
+      const weatherContainer = document.getElementById('weather');
+      const socket = io();
+
+      socket.on('weather_data', data => {
+        if (data) {
+          const { current_condition, city } = data;
+          const { observation_time, temp_C, lang_ar } = current_condition[0];
+          const content = `
+                <hr />
+                ${city}
+                <br />
+                <br />    
+                    آخر تحديث: ${observation_time}
+                <br />
+                <br />
+                درجة الحرارة (مئوية): ${temp_C}
+                <br />
+                <br />
+                حالة الجو: ${lang_ar[0].value}
+            `;
+          weatherContainer.innerHTML = content;
+          console.log(data);
+        }
+      });
+    </script>
+  </body>
+</html>
