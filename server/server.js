@@ -19,10 +19,10 @@ io.on('connection', socket => {
 
   // const query = socket.handshake.query;
 
-  let defaultCity = 'riyadh';
+  let defaultCity = 'الرياض';
 
   // Send weather data for the first time after establishing the connection
-  // sendWeatherData(socket, defaultCity);
+  sendWeatherData(socket, defaultCity);
 
   // Event to handle specific city requests from the client
   socket.on('send me weather data', city => {
@@ -31,9 +31,9 @@ io.on('connection', socket => {
   });
 
   // Keep sending real-time weather data every 1 minute
-  // setInterval(() => {
-  //   sendWeatherData(socket, defaultCity);
-  // }, 60000);
+  setInterval(() => {
+    sendWeatherData(socket, defaultCity);
+  }, 60000);
 });
 
 const sendWeatherData = async (socket, city) => {
@@ -60,9 +60,10 @@ const sendWeatherData = async (socket, city) => {
           error: data.error[0].msg,
         };
       } else {
-        const { current_condition, request } = response.data.data;
+        const { request, current_condition, weather } = response.data.data;
         dataToBeSent = {
-          current_condition,
+          current_condition: current_condition[0],
+          weather: weather[0],
           city: request[0].query,
         };
       }
