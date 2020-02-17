@@ -1,17 +1,36 @@
-import React from 'react';
-import { Form, FormGroup, Label, Input, Button, InputGroup } from 'reactstrap';
+import React, { useState } from 'react';
+import { Form, FormGroup, Input, Button } from 'reactstrap';
 
-const CityInputForm = () => {
+const CityInputForm = ({ updateCity }) => {
+  const [city, setCity] = useState('');
+
+  const handleCityChange = e => {
+    const { value } = e.target;
+    setCity(value);
+  };
+
+  const handleCitySubmit = e => {
+    e.preventDefault();
+    if (city !== '') {
+      updateCity(city);
+      setCity('');
+    }
+  };
+
   return (
-    <Form>
+    <Form onSubmit={handleCitySubmit}>
       <FormGroup className="text-right mt-3">
-        <Input id="cityInput" placeholder="أدخل مدينتك هنا" />
+        <Input
+          placeholder="أدخل مدينتك هنا"
+          value={city}
+          onChange={handleCityChange}
+        />
         <Input type="select" className="degree-type-input">
           <option value="C">مئوية</option>
           <option value="F">فهرنهايت</option>
         </Input>
 
-        <Button type="button" color="success" block>
+        <Button type="submit" color="success" block>
           ابحث
         </Button>
       </FormGroup>
