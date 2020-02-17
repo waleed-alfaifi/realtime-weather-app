@@ -14,10 +14,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
 
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
-
 io.on('connection', socket => {
   console.log('New client connected');
 
@@ -26,7 +22,7 @@ io.on('connection', socket => {
   let defaultCity = 'riyadh';
 
   // Send weather data for the first time after establishing the connection
-  sendWeatherData(socket, defaultCity);
+  // sendWeatherData(socket, defaultCity);
 
   // Event to handle specific city requests from the client
   socket.on('send me weather data', city => {
@@ -35,9 +31,9 @@ io.on('connection', socket => {
   });
 
   // Keep sending real-time weather data every 1 minute
-  setInterval(() => {
-    sendWeatherData(socket, defaultCity);
-  }, 60000);
+  // setInterval(() => {
+  //   sendWeatherData(socket, defaultCity);
+  // }, 60000);
 });
 
 const sendWeatherData = async (socket, city) => {
