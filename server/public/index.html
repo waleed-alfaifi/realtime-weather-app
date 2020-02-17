@@ -8,7 +8,7 @@
   <body>
     <h1>Weclome to my real time weather app</h1>
     <form>
-      <input type="text" />
+      <input type="text" id="city" />
       <button type="submit">Submit</button>
     </form>
 
@@ -16,12 +16,14 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      const city = document.querySelector('input[type="text"').value;
+      const city = document.querySelector('#city');
+      const submit = document.querySelector('button[type="submit"');
       const weatherContainer = document.getElementById('weather');
       const socket = io();
 
-      socket.on('weather_data', data => {
+      socket.on('get weather data', data => {
         if (data) {
+          console.log(data);
           const { current_condition, city } = data;
           const { observation_time, temp_C, lang_ar } = current_condition[0];
           const content = `
@@ -40,6 +42,18 @@
           weatherContainer.innerHTML = content;
           console.log(data);
         }
+      });
+
+      let chosen = '';
+
+      city.addEventListener('change', e => {
+        chosen = e.target.value;
+        console.log(e.target.value);
+      });
+
+      submit.addEventListener('click', e => {
+        e.preventDefault();
+        socket.emit('send me weather data', chosen);
       });
     </script>
   </body>

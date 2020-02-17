@@ -21,12 +21,23 @@ app.get('/', (req, res) => {
 io.on('connection', socket => {
   console.log('New client connected');
 
-  setInterval(() => {
-    const cities = ['jeddah', 'dammam', 'mecca', 'jizan'];
-    const chosen = cities[Math.floor(Math.random() * 3)];
+  // const query = socket.handshake.query;
 
-    sendWeatherData(socket, chosen);
-  }, 10000);
+  let defaultCity = 'riyadh';
+
+  // Send weather data for the first time after establishing the connection
+  sendWeatherData(socket, defaultCity);
+
+  // Event to handle specific city requests from the client
+  socket.on('send me weather data', city => {
+    sendWeatherData(socket, city);
+    defaultCity = city;
+  });
+
+  // Keep sending real-time weather data every 1 minute
+  setInterval(() => {
+    sendWeatherData(socket, defaultCity);
+  }, 60000);
 });
 
 const sendWeatherData = async (socket, city) => {
@@ -44,15 +55,31 @@ const sendWeatherData = async (socket, city) => {
 
   try {
     const response = await axios.get(apiUrl);
-    const { current_condition, request } = response.data.data;
-    socket.emit('weather_data', { current_condition, city: request[0].query });
+    const { data } = response.data;
+
+    if (data) {
+      let dataToBeSent = '';
+      if (data.error) {
+        dataToBeSent = {
+          error: data.error[0].msg,
+        };
+      } else {
+        const { current_condition, request } = response.data.data;
+        dataToBeSent = {
+          current_condition,
+          city: request[0].query,
+        };
+      }
+
+      socket.emit('get weather data', dataToBeSent);
+    }
   } catch (error) {
     console.log(error.response.data);
   }
 };
 
 const server = app.listen(process.env.PORT || 5000, () =>
-  console.log('Server running...')
+  console.log(`Server running on http://localhost:${5000}`)
 );
 
 io.attach(server);
