@@ -10,9 +10,12 @@ import {
   CardBody,
   CardTitle,
   CardSubtitle,
+  Spinner,
+  Alert,
 } from 'reactstrap';
 import CityInputForm from './components/CityInputForm';
 import io from 'socket.io-client';
+import { setItem, getItem } from './config/storage';
 import './App.css';
 
 class App extends Component {
@@ -20,21 +23,66 @@ class App extends Component {
     socket: null,
     chosenCity: '',
     currentCondition: {},
+    isFehrenheit: false,
+    isLoading: false,
+    alert: {
+      show: false,
+      alertType: '',
+      alertMessage: '',
+    },
   };
 
   componentDidMount() {
-    // Establish a new socket.io connection
-    const socket = io('http://localhost:5000');
-    this.setState({
-      socket,
-    });
+    // Get stored city in local storage to send it with the socket.io connection
+    let storedCity = getItem('city');
 
-    // This is where you will listen to events coming from socket.io server
+    // Establish a new socket.io connection and store it in state
+    const socket = io('http://localhost:5000', {
+      query: {
+        city: storedCity ? storedCity : '',
+      },
+    });
+    this.setState({ socket });
+
+    this.getWeatherData(socket);
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.isFehrenheit !== prevState.isFehrenheit) {
+      const { isFehrenheit } = this.state;
+      const {
+        temp_C,
+        temp_F,
+        mintempC,
+        maxtempC,
+        mintempF,
+        maxtempF,
+      } = this.state.currentCondition;
+      this.setState({
+        currentCondition: {
+          ...prevState.currentCondition,
+          temp: isFehrenheit ? temp_F : temp_C,
+          maxtemp: isFehrenheit ? maxtempF : maxtempC,
+          mintemp: isFehrenheit ? mintempF : mintempC,
+        },
+      });
+    }
+  }
+
+  getWeatherData = socket => {
+    if (!socket) return;
+    this.setState({ isLoading: true });
+
+    // This is where you will listen to events carrying weather data coming from socket.io server
     socket.on('get weather data', data => {
+      this.setState({ isLoading: true });
+
       if (!data.error) {
+        const { isFehrenheit } = this.state;
+
         const {
           temp_C,
-          // temp_F,
+          temp_F,
           weatherIconUrl,
           lang_ar,
           windspeedKmph,
@@ -45,9 +93,9 @@ class App extends Component {
 
         const {
           maxtempC,
-          // maxtempF,
+          maxtempF,
           mintempC,
-          // mintempF,
+          mintempF,
           astronomy,
         } = data.weather;
 
@@ -55,9 +103,14 @@ class App extends Component {
           currentCondition: {
             lastUpdate: moment(),
             temp_C,
-            maxtempC,
+            temp_F,
             mintempC,
-            // temp_F,
+            maxtempC,
+            mintempF,
+            maxtempF,
+            temp: isFehrenheit ? temp_F : temp_C,
+            maxtemp: isFehrenheit ? maxtempF : maxtempC,
+            mintemp: isFehrenheit ? mintempF : mintempC,
             weatherIcon: weatherIconUrl ? weatherIconUrl[0].value : '',
             weatherStatus: lang_ar ? lang_ar[0].value : '',
             windSpeed: windspeedKmph,
@@ -65,27 +118,89 @@ class App extends Component {
             sunrise: astronomy ? localize(astronomy[0].sunrise) : '',
             sunset: astronomy ? localize(astronomy[0].sunset) : '',
           },
-
           chosenCity: city,
         });
+
+        // Update local storage
+        setItem('city', city);
+
+        this.setState({ isLoading: false });
+        this.setState({
+          alert: {
+            alertType: '',
+            alertMessage: '',
+          },
+        });
+      } else {
+        // If there is an error in the returned data, handle it here
+        this.setState({
+          alert: {
+            alertType: 'danger',
+            alertMessage: 'لا يوجد مدينة بهذا الاسم. حاول إدخال مدينة أخرى.',
+          },
+        });
       }
-      console.log(data);
+      this.setState({ isLoading: false });
     });
-  }
+  };
 
   updateCity = city => {
     const { socket } = this.state;
     if (socket) {
+      this.setState({ isLoading: true });
       socket.emit('send me weather data', city);
     }
+  };
+
+  updateTempType = e => {
+    const { value } = e.target;
+    this.setState({
+      isFehrenheit: value === 'F' ? true : false,
+    });
+  };
+
+  renderIsLoading = () => {
+    return this.state.isLoading ? (
+      <Spinner size="sm" color="light" className="mr-1" />
+    ) : (
+      ''
+    );
+  };
+
+  renderAlert = () => {
+    const {
+      alert: { alertType, alertMessage },
+    } = this.state;
+
+    const onDismiss = () => {
+      this.setState({
+        alert: {
+          alertType: '',
+          alertMessage: '',
+        },
+      });
+    };
+
+    return alertType !== '' ? (
+      <Alert
+        color={alertType}
+        className="mt-2"
+        isOpen={alertType !== ''}
+        toggle={onDismiss}
+      >
+        {alertMessage}
+      </Alert>
+    ) : (
+      ''
+    );
   };
 
   render() {
     const {
       lastUpdate,
-      temp_C,
-      maxtempC,
-      mintempC,
+      temp,
+      maxtemp,
+      mintemp,
       weatherIcon,
       weatherStatus,
       windSpeed,
@@ -94,6 +209,15 @@ class App extends Component {
       sunset,
     } = this.state.currentCondition;
     const { chosenCity } = this.state;
+
+    const { isFehrenheit } = this.state;
+    const tempType = isFehrenheit ? 'F' : 'C';
+
+    const tempSymbol = () => {
+      return {
+        __html: isFehrenheit ? '&#8457;' : '&#8451;',
+      };
+    };
 
     return (
       <Container>
@@ -104,15 +228,23 @@ class App extends Component {
                 <h3 className="text-center mt-3">
                   مرحباً بك في تطبيق الطقس في الزمن الحقيقي
                 </h3>
-                <CityInputForm updateCity={this.updateCity} />
+                <CityInputForm
+                  updateCity={this.updateCity}
+                  updateTempType={this.updateTempType}
+                  tempType={tempType}
+                />
               </CardHeader>
+              {this.renderAlert()}
               <CardBody className="text-center">
                 <Card>
                   <CardBody>
                     <Card className="text-white" color="info">
-                      <small className="text-right mr-1">
-                        آخر تحديث:{' '}
-                        {lastUpdate ? lastUpdate.format('h:mm a') : ''}
+                      <small className="text-right">
+                        {this.renderIsLoading()}
+                        <span className="mr-1">
+                          آخر تحديث:{' '}
+                          {lastUpdate ? lastUpdate.format('h:mm a') : ''}
+                        </span>
                       </small>
                       <CardBody>
                         <CardTitle tag="h3">{chosenCity}</CardTitle>
@@ -126,11 +258,23 @@ class App extends Component {
                         </CardSubtitle>
                         <div className="mt-2">
                           <div>
-                            <span>درجة الحرارة: &#8451;{temp_C} </span>
+                            <span>
+                              درجة الحرارة:{' '}
+                              <span dangerouslySetInnerHTML={tempSymbol()} />
+                              {temp}
+                            </span>
                           </div>
                           <div className="info-grid">
-                            <span>درجة الحرارة العظمى: &#8451;{maxtempC}</span>
-                            <span>درجة الحرارة الدنيا: &#8451;{mintempC}</span>
+                            <span>
+                              درجة الحرارة العظمى:{' '}
+                              <span dangerouslySetInnerHTML={tempSymbol()} />
+                              {maxtemp}
+                            </span>
+                            <span>
+                              درجة الحرارة الدنيا:{' '}
+                              <span dangerouslySetInnerHTML={tempSymbol()} />
+                              {mintemp}
+                            </span>
                             <span>سرعة الرياح: {windSpeed} كم/س</span>
                             <span>اتجاه الرياح: {windDirection} درجة</span>
                             <span>شروق الشمس: {sunrise}</span>

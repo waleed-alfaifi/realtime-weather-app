@@ -17,9 +17,9 @@ app.use(cors());
 io.on('connection', socket => {
   console.log('New client connected');
 
-  // const query = socket.handshake.query;
+  const city = socket.handshake.query['city'];
 
-  let defaultCity = 'الرياض';
+  let defaultCity = city !== '' ? city : 'الرياض';
 
   // Send weather data for the first time after establishing the connection
   sendWeatherData(socket, defaultCity);

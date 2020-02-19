@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Form, FormGroup, Input, Button } from 'reactstrap';
 
-const CityInputForm = ({ updateCity }) => {
+const CityInputForm = ({ updateCity, tempType, updateTempType }) => {
   const [city, setCity] = useState('');
 
   const handleCityChange = e => {
@@ -25,7 +25,12 @@ const CityInputForm = ({ updateCity }) => {
           value={city}
           onChange={handleCityChange}
         />
-        <Input type="select" className="degree-type-input">
+        <Input
+          type="select"
+          className="degree-type-input"
+          value={tempType}
+          onChange={updateTempType}
+        >
           <option value="C">مئوية</option>
           <option value="F">فهرنهايت</option>
         </Input>

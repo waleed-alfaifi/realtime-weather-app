@@ -1,12 +1,15 @@
 .info-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  /* grid-template-rows: 1fr 1fr; */
-  /* grid-template-columns: repeat(2, 1fr); */
 }
 
 .card {
   border-radius: 0;
+}
+
+.alert {
+  border-radius: 0;
+  text-align: right;
 }
 
 input[type='text'] {
@@ -18,7 +21,7 @@ input[type='text'] {
   width: 110px;
 }
 
-button[type='button'] {
+button[type='submit'] {
   border-radius: 0;
 }
 
