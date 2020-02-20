@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const axios = require('axios').default;
 const io = require('socket.io')();
@@ -13,6 +14,13 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/build')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+  });
+}
 
 io.on('connection', socket => {
   console.log('New client connected');

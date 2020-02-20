@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import moment from './config/moment';
-import { localize } from './config/localizedTime';
+
 import {
   Container,
   Row,
@@ -15,6 +15,8 @@ import {
 } from 'reactstrap';
 import CityInputForm from './components/CityInputForm';
 import io from 'socket.io-client';
+import { localize } from './config/localizedTime';
+import { toHTTPs } from './config/convertToHTTPs';
 import { setItem, getItem } from './config/storage';
 import './App.css';
 
@@ -37,7 +39,7 @@ class App extends Component {
     let storedCity = getItem('city');
 
     // Establish a new socket.io connection and store it in state
-    const socket = io('http://localhost:5000', {
+    const socket = io('', {
       query: {
         city: storedCity ? storedCity : '',
       },
@@ -111,7 +113,7 @@ class App extends Component {
             temp: isFehrenheit ? temp_F : temp_C,
             maxtemp: isFehrenheit ? maxtempF : maxtempC,
             mintemp: isFehrenheit ? mintempF : mintempC,
-            weatherIcon: weatherIconUrl ? weatherIconUrl[0].value : '',
+            weatherIcon: weatherIconUrl ? toHTTPs(weatherIconUrl[0].value) : '',
             weatherStatus: lang_ar ? lang_ar[0].value : '',
             windSpeed: windspeedKmph,
             windDirection: winddirDegree,
