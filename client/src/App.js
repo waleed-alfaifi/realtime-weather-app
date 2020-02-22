@@ -46,6 +46,21 @@ class App extends Component {
     });
     this.setState({ socket });
 
+    socket.on('disconnect', reason => {
+      // If the server closed the connection
+      if (reason === 'io server disconnect') {
+        this.setState({
+          socket: null,
+          isLoading: false,
+          alert: {
+            alertType: 'danger',
+            alertMessage:
+              'حدثت مشكلة أثناء الاتصال بالخادم. الرجاء المحاولة فيما بعد.',
+          },
+        });
+      }
+    });
+
     this.getWeatherData(socket);
   }
 
@@ -148,6 +163,7 @@ class App extends Component {
 
   updateCity = city => {
     const { socket } = this.state;
+    console.log(socket);
     if (socket) {
       this.setState({ isLoading: true });
       socket.emit('send me weather data', city);
