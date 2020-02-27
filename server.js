@@ -16,9 +16,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cors());
 
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
+  app.use(express.static(path.join(__dirname, 'client/build')));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+    res.sendFile(path.join(__dirname, 'client/build/index.html'));
   });
 }
 
@@ -81,7 +81,6 @@ const sendWeatherData = async (socket, city) => {
     }
   } catch (error) {
     socket.disconnect();
-    console.log(error.response.data);
   }
 };
 
