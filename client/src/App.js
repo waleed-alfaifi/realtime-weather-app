@@ -39,7 +39,7 @@ class App extends Component {
     let storedCity = getItem('city');
 
     // Establish a new socket.io connection and store it in state
-    const socket = io('', {
+    const socket = io('http://localhost:5000', {
       query: {
         city: storedCity ? storedCity : '',
       },
